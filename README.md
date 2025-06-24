@@ -1,34 +1,26 @@
 # Gitleaks Pre-commit Hook
 
-Automatic secrets detection in git commits using [gitleaks](https://github.com/gitleaks/gitleaks).
+Automatic secrets detection in git commits using [gitleaks](https://github.com/gitleaks/gitleaks) with auto-installation.
 
 ## What is this?
 
 This repository contains a `pre-commit` hook script that automatically checks for secrets (API keys, passwords, tokens, etc.) before each commit. If secrets are detected, the commit will be rejected.
 
-## Installing gitleaks
+**Key features:**
+- Automatic gitleaks installation if not present
+- Cross-platform support (macOS, Linux, Windows with Git Bash)
+- Enable/disable via git config
+- Verbose output with redacted secrets
 
-Before using the hook, you need to install gitleaks:
+## Installation
 
-### macOS
-```bash
-brew install gitleaks
-```
+No manual gitleaks installation required! The hook will automatically:
 
-### Linux/Windows
-Download binary from [GitHub releases](https://github.com/gitleaks/gitleaks/releases) and put it in your PATH.
+- **macOS**: Install via Homebrew (if available) or binary download
+- **Linux**: Download and install binary from GitHub releases  
+- **Windows**: Download and install via PowerShell from GitHub releases
 
-### Docker
-```bash
-docker pull zricethezav/gitleaks:latest
-```
-
-### Go
-```bash
-go install github.com/gitleaks/gitleaks/v8@latest
-```
-
-Full installation guide: https://github.com/gitleaks/gitleaks#installing
+If automatic installation fails, see: https://github.com/gitleaks/gitleaks#installing
 
 ## Usage
 
@@ -60,12 +52,29 @@ The commit should be rejected with a message about detected secrets.
 
 ## Features
 
-- Scans only staged changes
+- Automatic gitleaks installation (no manual setup required)
+- Cross-platform support (macOS, Linux, Windows Git Bash)
+- Enable/disable via git config: `git config gitleaks.enabled false`
+- Scans only staged changes (fast)
 - Verbose output with redacted secrets
 - Clear error messages
 
+## Configuration
+
+### Enable/Disable
+
+```bash
+# Disable gitleaks for this repository
+git config gitleaks.enabled false
+
+# Enable gitleaks (default)
+git config gitleaks.enabled true
+
+# Check current status
+git config gitleaks.enabled
+```
+
 ## Roadmap
 
-- [ ] Automatic gitleaks installation + git config options
+- [x] Automatic gitleaks installation + git config options
 - [ ] "curl pipe sh" installation method
-
