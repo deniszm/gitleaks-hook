@@ -1,6 +1,6 @@
 # Gitleaks Pre-commit Hook
 
-Automatic secrets detection in git commits using [gitleaks](https://github.com/gitleaks/gitleaks) with auto-installation.
+Automatic secrets detection in git commits using [gitleaks](https://github.com/gitleaks/gitleaks).
 
 ## What is this?
 
@@ -22,13 +22,30 @@ No manual gitleaks installation required! The hook will automatically:
 
 If automatic installation fails, see: https://github.com/gitleaks/gitleaks#installing
 
-## Usage
+### Requirements
 
-### Installing the hook
+- Bash shell
+- Git repository
+- `curl` (for one-line installation method)
+
+### Quick Installation (Recommended)
+
+One-line installation using curl pipe sh method:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/deniszm/gitleaks-hook/main/install.sh | bash
+```
+
+This will automatically:
+- Download the latest gitleaks pre-commit hook
+- Install it to `.git/hooks/pre-commit`
+- Make it executable and ready to use
+
+### Manual Installation
 
 1. Clone this repository:
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/deniszm/gitleaks-hook
 cd gitleaks-hook
 ```
 
@@ -76,5 +93,6 @@ git config gitleaks.enabled
 
 ## Roadmap
 
-- [x] Automatic gitleaks installation + git config options
-- [ ] "curl pipe sh" installation method
+- [x] Basic pre-commit hook with local gitleaks requirement
+- [x] Automatic gitleaks installation + git config options  
+- [x] "curl pipe sh" one-line installation method
