@@ -2,19 +2,200 @@
 
 set -e
 
+# Configuration
+GITLEAKS_ENABLED_CONFIG="gitleaks.enabled"
+GITLEAKS_VERSION="v8.27.2"
+
+# Check if gitleaks is enabled via git config
+check_gitleaks_enabled() {
+    local enabled=$(git config --get "$GITLEAKS_ENABLED_CONFIG" 2>/dev/null || echo "true")
+    if [[ "$enabled" == "false" ]]; then
+        echo "Gitleaks is disabled via git config. To enable: git config $GITLEAKS_ENABLED_CONFIG true"
+        exit 0
+    fi
+}
+
+# Detect operating system
+detect_os() {
+    case "$(uname -s)" in
+        Darwin*)    echo "macos" ;;
+        Linux*)     echo "linux" ;;
+        CYGWIN*|MINGW*|MSYS*) echo "windows" ;;
+        *)          echo "unknown" ;;
+    esac
+}
+
+# Detect architecture
+detect_arch() {
+    case "$(uname -m)" in
+        x86_64|amd64) echo "x64" ;;
+        aarch64|arm64) echo "arm64" ;;
+        i386|i686) echo "x32" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
+# Install gitleaks automatically
+install_gitleaks() {
+    local os=$(detect_os)
+    local arch=$(detect_arch)
+    
+    echo "Installing gitleaks $GITLEAKS_VERSION for $os-$arch..."
+    
+    case "$os" in
+        "macos")
+            if command -v brew &> /dev/null; then
+                echo "Installing via Homebrew..."
+                brew install gitleaks
+            else
+                install_binary_release "$os" "$arch"
+            fi
+            ;;
+        "linux"|"windows")
+            install_binary_release "$os" "$arch"
+            ;;
+        *)
+            echo "Unsupported OS: $os"
+            echo "Please install gitleaks manually: https://github.com/gitleaks/gitleaks#installing"
+            exit 2
+            ;;
+    esac
+}
+
+# Install from GitHub binary releases
+install_binary_release() {
+    local os=$1
+    local arch=$2
+    local binary_name="gitleaks"
+    local download_dir="/tmp"
+    
+    # Adjust naming for different OS
+    case "$os" in
+        "windows")
+            binary_name="gitleaks.exe"
+            local archive_name="gitleaks_${GITLEAKS_VERSION#v}_windows_$arch.zip"
+            ;;
+        "linux")
+            local archive_name="gitleaks_${GITLEAKS_VERSION#v}_linux_$arch.tar.gz"
+            ;;
+        "macos")
+            local archive_name="gitleaks_${GITLEAKS_VERSION#v}_darwin_$arch.tar.gz"
+            ;;
+    esac
+    
+    local download_url="https://github.com/gitleaks/gitleaks/releases/download/$GITLEAKS_VERSION/$archive_name"
+    local archive_path="$download_dir/$archive_name"
+    
+    echo "Downloading $download_url..."
+    
+    if [[ "$os" == "windows" ]]; then
+        if command -v powershell.exe &> /dev/null; then
+            echo "Using PowerShell for download..."
+            powershell.exe -Command "Invoke-WebRequest -Uri '$download_url' -OutFile '$archive_path'"
+        else
+            echo "Error: PowerShell required for Windows installation"
+            exit 2
+        fi
+    else
+        if command -v curl &> /dev/null; then
+            curl -fsSL -o "$archive_path" "$download_url"
+        elif command -v wget &> /dev/null; then
+            wget -q -O "$archive_path" "$download_url"
+        else
+            echo "Error: curl or wget required for download"
+            exit 2
+        fi
+    fi
+    
+    echo "Extracting archive..."
+    case "$archive_name" in
+        *.zip)
+            if [[ "$os" == "windows" ]]; then
+                if command -v powershell.exe &> /dev/null; then
+                    echo "Using PowerShell for extraction..."
+                    powershell.exe -Command "Expand-Archive -Path '$archive_path' -DestinationPath '$download_dir' -Force"
+                else
+                    echo "Error: PowerShell required for Windows installation"
+                    exit 2
+                fi
+            else
+                if command -v unzip &> /dev/null; then
+                    unzip -q "$archive_path" -d "$download_dir"
+                else
+                    echo "Error: unzip required for zip extraction"
+                    exit 2
+                fi
+            fi
+            ;;
+        *.tar.gz)
+            tar -xzf "$archive_path" -C "$download_dir"
+            ;;
+    esac
+    
+    # Determine installation directory
+    local install_dir
+    if [[ "$os" == "windows" ]]; then
+        # For Git Bash on Windows, try common locations
+        if [[ -d "/usr/local/bin" ]] && [[ -w "/usr/local/bin" ]]; then
+            install_dir="/usr/local/bin"
+        elif [[ -d "/mingw64/bin" ]] && [[ -w "/mingw64/bin" ]]; then
+            install_dir="/mingw64/bin"
+        elif [[ -d "/c/Program Files/Git/usr/local/bin" ]] && [[ -w "/c/Program Files/Git/usr/local/bin" ]]; then
+            install_dir="/c/Program Files/Git/usr/local/bin"
+        else
+            install_dir="$HOME/bin"
+            mkdir -p "$install_dir"
+            echo "Warning: Added gitleaks to $install_dir"
+            echo "Make sure to add $install_dir to your PATH"
+        fi
+    else
+        if [[ -w "/usr/local/bin" ]]; then
+            install_dir="/usr/local/bin"
+        elif [[ -w "/usr/bin" ]]; then
+            install_dir="/usr/bin"
+        else
+            install_dir="$HOME/bin"
+            mkdir -p "$install_dir"
+            echo "Warning: Added gitleaks to $install_dir - make sure this is in your PATH"
+        fi
+    fi
+    
+    echo "Installing to $install_dir..."
+    mv "$download_dir/$binary_name" "$install_dir/"
+    chmod +x "$install_dir/$binary_name"
+    
+    # Cleanup
+    rm -f "$archive_path"
+    
+    echo "Gitleaks installed successfully!"
+}
+
+# Check if gitleaks is enabled
+check_gitleaks_enabled
+
+# Main execution
 echo "Running gitleaks security scan..."
 
+# Check if gitleaks is installed, install if missing
 if ! command -v gitleaks &> /dev/null; then
-    echo "Error: gitleaks is not installed!"
-    echo "Install: https://github.com/gitleaks/gitleaks#installing"
-    exit 2
+    echo "Gitleaks not found. Installing automatically..."
+    install_gitleaks
+    
+    # Verify installation
+    if ! command -v gitleaks &> /dev/null; then
+        echo "Error: Failed to install gitleaks"
+        echo "Please install manually: https://github.com/gitleaks/gitleaks#installing"
+        exit 2
+    fi
 fi
 
+# Run gitleaks scan
 if gitleaks git --pre-commit --staged --verbose --redact; then
     echo "No secrets detected. Commit allowed."
     exit 0
 else
     echo "SECRETS DETECTED! Commit rejected."
     echo "Remove secrets before committing."
+    echo "To disable gitleaks: git config $GITLEAKS_ENABLED_CONFIG false"
     exit 1
 fi
