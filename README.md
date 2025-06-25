@@ -18,15 +18,15 @@ No manual gitleaks installation required! The hook will automatically:
 
 - **macOS**: Install via Homebrew (if available) or binary download
 - **Linux**: Download and install binary from GitHub releases  
-- **Windows**: Download and install via PowerShell from GitHub releases
+- **Windows**: Download and install binary via Git Bash (curl + unzip)
 
 If automatic installation fails, see: https://github.com/gitleaks/gitleaks#installing
 
 ### Requirements
 
-- Bash shell
 - Git repository
 - `curl` (for one-line installation method)
+- For Windows: Git Bash with curl and unzip (included in Git for Windows)
 
 ### Quick Installation (Recommended)
 

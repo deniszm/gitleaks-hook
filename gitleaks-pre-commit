@@ -88,43 +88,21 @@ install_binary_release() {
     
     echo "Downloading $download_url..."
     
-    if [[ "$os" == "windows" ]]; then
-        if command -v powershell.exe &> /dev/null; then
-            echo "Using PowerShell for download..."
-            powershell.exe -Command "Invoke-WebRequest -Uri '$download_url' -OutFile '$archive_path'"
-        else
-            echo "Error: PowerShell required for Windows installation"
-            exit 2
-        fi
+    if command -v curl &> /dev/null; then
+        curl -fsSL -o "$archive_path" "$download_url"
     else
-        if command -v curl &> /dev/null; then
-            curl -fsSL -o "$archive_path" "$download_url"
-        elif command -v wget &> /dev/null; then
-            wget -q -O "$archive_path" "$download_url"
-        else
-            echo "Error: curl or wget required for download"
-            exit 2
-        fi
+        echo "Error: curl required for download"
+        exit 2
     fi
     
     echo "Extracting archive..."
     case "$archive_name" in
         *.zip)
-            if [[ "$os" == "windows" ]]; then
-                if command -v powershell.exe &> /dev/null; then
-                    echo "Using PowerShell for extraction..."
-                    powershell.exe -Command "Expand-Archive -Path '$archive_path' -DestinationPath '$download_dir' -Force"
-                else
-                    echo "Error: PowerShell required for Windows installation"
-                    exit 2
-                fi
+            if command -v unzip &> /dev/null; then
+                unzip -q "$archive_path" -d "$download_dir"
             else
-                if command -v unzip &> /dev/null; then
-                    unzip -q "$archive_path" -d "$download_dir"
-                else
-                    echo "Error: unzip required for zip extraction"
-                    exit 2
-                fi
+                echo "Error: unzip required for zip extraction"
+                exit 2
             fi
             ;;
         *.tar.gz)
