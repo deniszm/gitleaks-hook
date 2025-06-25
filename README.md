@@ -27,6 +27,7 @@ If automatic installation fails, see: https://github.com/gitleaks/gitleaks#insta
 - Git repository
 - `curl` (for one-line installation method)
 - For Windows: Git Bash with curl and unzip (included in Git for Windows)
+  - After installation, restart Git Bash to update PATH
 
 ### Quick Installation (Recommended)
 

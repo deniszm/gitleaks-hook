@@ -113,19 +113,7 @@ install_binary_release() {
     # Determine installation directory
     local install_dir
     if [[ "$os" == "windows" ]]; then
-        # For Git Bash on Windows, try common locations
-        if [[ -d "/usr/local/bin" ]] && [[ -w "/usr/local/bin" ]]; then
-            install_dir="/usr/local/bin"
-        elif [[ -d "/mingw64/bin" ]] && [[ -w "/mingw64/bin" ]]; then
-            install_dir="/mingw64/bin"
-        elif [[ -d "/c/Program Files/Git/usr/local/bin" ]] && [[ -w "/c/Program Files/Git/usr/local/bin" ]]; then
-            install_dir="/c/Program Files/Git/usr/local/bin"
-        else
-            install_dir="$HOME/bin"
-            mkdir -p "$install_dir"
-            echo "Warning: Added gitleaks to $install_dir"
-            echo "Make sure to add $install_dir to your PATH"
-        fi
+        install_dir="$HOME/bin"
     else
         if [[ -w "/usr/local/bin" ]]; then
             install_dir="/usr/local/bin"
@@ -133,10 +121,9 @@ install_binary_release() {
             install_dir="/usr/bin"
         else
             install_dir="$HOME/bin"
-            mkdir -p "$install_dir"
-            echo "Warning: Added gitleaks to $install_dir - make sure this is in your PATH"
         fi
     fi
+    mkdir -p "$install_dir"
     
     echo "Installing to $install_dir..."
     mv "$download_dir/$binary_name" "$install_dir/"
